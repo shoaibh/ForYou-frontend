@@ -1,15 +1,13 @@
-import { User, getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import React, {
+  ReactNode,
   createContext,
   useContext,
-  useState,
-  ReactNode,
-  useEffect,
   useReducer,
+  useState
 } from "react";
 
 interface AuthContextProps {
-  currentUser: User | null;
+  currentUser:  any;
   isLoading: boolean;
   logout: () => void;
   data: any;
@@ -22,7 +20,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const auth = getAuth();
 
 const INITIAL_STATE = {
   chatId: "null",
@@ -30,33 +27,13 @@ const INITIAL_STATE = {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const logout = () => {
     // Implement your logout logic here
-    signOut(auth)
-      .then(() => {
-        // Sign-out successful.
-        console.log("User signed out successfully");
-        setCurrentUser(null);
-      })
-      .catch((error) => {
-        // An error happened.
-        console.error("Error signing out:", error);
-      });
+
   };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user); // Set isLoggedIn based on user's authentication state
-      setIsLoading(false);
-    });
-
-    return () => {
-      unsubscribe(); // Unsubscribe when the component unmounts
-    };
-  }, []);
 
   const chatReducer = (state: any, action: any) => {
     switch (action.type) {

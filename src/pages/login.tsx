@@ -1,28 +1,22 @@
 // import { useAuth } from "../utils/AuthProvider";
 // import { useNavigate } from "react-router-dom";
-import { BsTelephoneFill, BsFillShieldLockFill } from "react-icons/bs";
+import toast, { Toaster } from "react-hot-toast";
+import { BsFillShieldLockFill, BsHeadphones, BsTelephoneFill } from "react-icons/bs";
 import { CgSpinner } from "react-icons/cg";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  updateProfile,
-} from "firebase/auth";
-import { toast, Toaster } from "react-hot-toast";
 
-import PhoneInput from "react-phone-input-2";
-import { useEffect, useState } from "react";
-import "react-phone-input-2/lib/style.css";
-import { auth, db } from "../firebase.config.ts";
-import OtpInput from "react-otp-input";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/utils/AuthProvider.tsx";
-import { doc, setDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import OtpInput from "react-otp-input";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { useNavigate } from "react-router-dom";
+import axios from "axios"
 
 export const Login = () => {
   const [otp, setOtp] = useState("");
   const [ph, setPh] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showOTP, setShowOTP] = useState(false);
+  const [showOTP, setShowOTP] = useState(true);
 
   const navigate = useNavigate();
 
@@ -34,91 +28,61 @@ export const Login = () => {
     }
   }, [currentUser]);
 
-  function onCaptchVerify() {
-    if (!window.recaptchaVerifier) {
-      const recaptchaContainer = document.getElementById("recaptcha-container");
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        recaptchaContainer!,
-        {
-          size: "invisible",
-          callback: () => {
-            onSignup();
-          },
-          "expired-callback": () => {},
-        }
-      );
-    }
-  }
-
-  function onSignup() {
+  const onSignup = async () => {
     setLoading(true);
-    onCaptchVerify();
 
-    const appVerifier = window.recaptchaVerifier;
 
     const formatPh = "+" + ph;
 
-    signInWithPhoneNumber(auth, formatPh, appVerifier)
-      .then((confirmationResult) => {
-        window.confirmationResult = confirmationResult;
-        setLoading(false);
-        setShowOTP(true);
-        toast.success("OTP sended successfully!");
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-      });
+    try {
+      // Assuming phoneNumber is set by an input field
+      await axios.post('http://localhost:3000/api/otp/send', { formatPh });
+      setShowOTP(true)
+      toast.success("OTP sent successfully")
+    } catch (error) {
+      console.error('Error in sending OTP:', error);
+      toast.error(`Error in sending OTP: ${error}`);
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function onOTPVerify() {
+  const onOTPVerify = async () => {
     setLoading(true);
-    window.confirmationResult
-      .confirm(otp)
-      .then(async (res: any) => {
-        setLoading(false);
-        console.log("==", { res });
 
-        const date = new Date().getTime();
-        const displayName = `user_${date}`;
+    const formatPh = "+" + ph;
 
-        await updateProfile(res.user, {
-          displayName,
-        });
-        // //create user on firestore
-        await setDoc(doc(db, "users", res.user.uid), {
-          uid: res.user.uid,
-          displayName,
-          phoneNumber: res.user.phoneNumber
-        });
-
-        // //create empty user chats on firestore
-        await setDoc(doc(db, "userChats", res.user.uid), {});
-        navigate("/");
-      })
-      .catch((err: any) => {
-        console.log(err);
-        setLoading(false);
-      });
+    try {
+      const response = await axios.post('http://localhost:3000/api/otp/verify', { formatPh, code: otp });
+      if (response.data.success) {
+        toast.success("OTP verified successfully") 
+        navigate('/home');
+      } else {
+        alert('Verification failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error in verifying OTP:', error);
+      toast.error(`Error in verifying OTP: ${error}`);
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <>
-      <section className="bg-emerald-500 flex items-center justify-center h-screen">
+      <section className="bg-white flex items-center justify-center h-screen">
         <div>
           <Toaster toastOptions={{ duration: 4000 }} />
-          <div id="recaptcha-container"></div>
 
           <div className="w-80 flex flex-col gap-4 rounded-lg p-4">
             {showOTP ? (
               <>
-                <div className="bg-white text-emerald-500 w-fit mx-auto p-4 rounded-full">
+                <div className="bg-violet-500 text-white w-fit mx-auto p-4 rounded-full">
                   <BsFillShieldLockFill size={30} />
                 </div>
                 <label
                   htmlFor="otp"
-                  className="font-bold text-xl text-white text-center"
+                  className=" text-xl text-black text-center"
                 >
                   Enter your OTP
                 </label>
@@ -128,10 +92,12 @@ export const Login = () => {
                   numInputs={6}
                   renderSeparator={<span>-</span>}
                   renderInput={(props: any) => <input {...props} />}
+                  containerStyle="justify-center"
+                  inputStyle="text-black border-b border-black border-solid"
                 />
                 <button
                   onClick={onOTPVerify}
-                  className="bg-emerald-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
+                  className="bg-violet-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
                 >
                   {loading && (
                     <CgSpinner size={20} className="mt-1 animate-spin" />
@@ -141,8 +107,8 @@ export const Login = () => {
               </>
             ) : (
               <>
-                <div className="bg-white text-emerald-500 w-fit mx-auto p-4 rounded-full">
-                  <BsTelephoneFill size={30} />
+                <div className="bg-white text-violet-500 w-fit mx-auto p-4 rounded-full">
+                  <BsHeadphones size={150} />
                 </div>
                 <label
                   htmlFor=""
@@ -153,7 +119,7 @@ export const Login = () => {
                 <PhoneInput country={"in"} value={ph} onChange={setPh} />
                 <button
                   onClick={onSignup}
-                  className="bg-emerald-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
+                  className="bg-violet-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
                 >
                   {loading && (
                     <CgSpinner size={20} className="mt-1 animate-spin" />
