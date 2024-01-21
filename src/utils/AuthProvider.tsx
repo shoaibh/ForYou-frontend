@@ -27,8 +27,8 @@ const INITIAL_STATE = {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentUser, setCurrentUser] = useState<any>({name: "shoaib"});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const logout = () => {
     // Implement your logout logic here

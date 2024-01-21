@@ -11,6 +11,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"
+import { useMutation} from "@tanstack/react-query"
 
 export const Login = () => {
   const [otp, setOtp] = useState("");
@@ -19,6 +20,8 @@ export const Login = () => {
   const [showOTP, setShowOTP] = useState(true);
 
   const navigate = useNavigate();
+
+  // const {mutateAsync} = useMutation()
 
   const { currentUser } = useAuth();
 
@@ -55,8 +58,14 @@ export const Login = () => {
     try {
       const response = await axios.post('http://localhost:3000/api/otp/verify', { formatPh, code: otp });
       if (response.data.success) {
-        toast.success("OTP verified successfully") 
-        navigate('/home');
+        toast.success("OTP verified successfully")
+
+        /*
+        if profile exists in database then navigate to home otherwise
+        navigate to profile making page.
+        */
+        navigate('/profile')
+        // navigate('/home');
       } else {
         alert('Verification failed. Please try again.');
       }
@@ -90,7 +99,7 @@ export const Login = () => {
                   value={otp}
                   onChange={setOtp}
                   numInputs={6}
-                  renderSeparator={<span>-</span>}
+                  renderSeparator={<span style={{width:"5px"}}></span>}
                   renderInput={(props: any) => <input {...props} />}
                   containerStyle="justify-center"
                   inputStyle="text-black border-b border-black border-solid"
