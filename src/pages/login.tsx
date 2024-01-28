@@ -12,12 +12,19 @@ import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"
 import { useMutation} from "@tanstack/react-query"
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  updateProfile,
+} from "firebase/auth";
+import { auth, db } from "../firebase.config.ts";
+import { doc, setDoc } from "firebase/firestore";
 
 export const Login = () => {
   const [otp, setOtp] = useState("");
   const [ph, setPh] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showOTP, setShowOTP] = useState(true);
+  const [showOTP, setShowOTP] = useState(false);
 
   const navigate = useNavigate();
 
@@ -31,50 +38,73 @@ export const Login = () => {
     }
   }, [currentUser]);
 
-  const onSignup = async () => {
-    setLoading(true);
-
-
-    const formatPh = "+" + ph;
-
-    try {
-      // Assuming phoneNumber is set by an input field
-      await axios.post('http://localhost:3000/api/otp/send', { formatPh });
-      setShowOTP(true)
-      toast.success("OTP sent successfully")
-    } catch (error) {
-      console.error('Error in sending OTP:', error);
-      toast.error(`Error in sending OTP: ${error}`);
-    } finally {
-      setLoading(false)
+  function onCaptchVerify() {
+    if (!window.recaptchaVerifier) {
+      const recaptchaContainer = document.getElementById("recaptcha-container");
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        recaptchaContainer!,
+        {
+          size: "invisible",
+          callback: () => {
+            onSignup();
+          },
+          "expired-callback": () => {},
+        }
+      );
     }
   }
 
-  const onOTPVerify = async () => {
+  function onSignup() {
     setLoading(true);
+    onCaptchVerify();
+
+    const appVerifier = window.recaptchaVerifier;
 
     const formatPh = "+" + ph;
 
-    try {
-      const response = await axios.post('http://localhost:3000/api/otp/verify', { formatPh, code: otp });
-      if (response.data.success) {
-        toast.success("OTP verified successfully")
+    signInWithPhoneNumber(auth, formatPh, appVerifier)
+      .then((confirmationResult) => {
+        window.confirmationResult = confirmationResult;
+        setLoading(false);
+        setShowOTP(true);
+        toast.success("OTP sended successfully!");
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+      });
+  }
 
-        /*
-        if profile exists in database then navigate to home otherwise
-        navigate to profile making page.
-        */
-        navigate('/profile')
-        // navigate('/home');
-      } else {
-        alert('Verification failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error in verifying OTP:', error);
-      toast.error(`Error in verifying OTP: ${error}`);
-    } finally {
-      setLoading(false)
-    }
+  function onOTPVerify() {
+    setLoading(true);
+    window.confirmationResult
+      .confirm(otp)
+      .then(async (res: any) => {
+        setLoading(false);
+        console.log("==", { res });
+
+        const date = new Date().getTime();
+        const displayName = `user_${date}`;
+
+        await updateProfile(res.user, {
+          displayName,
+        });
+        // //create user on firestore
+        await setDoc(doc(db, "users", res.user.uid), {
+          uid: res.user.uid,
+          displayName,
+          phoneNumber: res.user.phoneNumber
+        });
+
+        // //create empty user chats on firestore
+        await setDoc(doc(db, "userChats", res.user.uid), {});
+        navigate("/profile");
+      })
+      .catch((err: any) => {
+        console.log(err);
+        setLoading(false);
+      });
   }
 
   return (
@@ -82,7 +112,7 @@ export const Login = () => {
       <section className="bg-white flex items-center justify-center h-screen">
         <div>
           <Toaster toastOptions={{ duration: 4000 }} />
-
+          <div id="recaptcha-container"></div>
           <div className="w-80 flex flex-col gap-4 rounded-lg p-4">
             {showOTP ? (
               <>

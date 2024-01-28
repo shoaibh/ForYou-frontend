@@ -15,6 +15,6 @@ export const CameraFeed= forwardRef<HTMLVideoElement>((props, ref) => {
     }
   }, [ref]);
 
-  return <video ref={ref} autoPlay />;
+  return <video ref={ref} autoPlay className='h-full transform scale-150' />;
 });
 

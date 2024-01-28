@@ -5,8 +5,10 @@ import { Home } from "./pages/home";
 import { PrivateRoutes } from "./utils/PrivateRoutes";
 import { AuthProvider } from "./utils/AuthProvider";
 import { Profile } from "./pages/profile";
+import { Chat } from "./components/chat";
 
 function App() {
+  
   return (
     <div className="bg-white m-auto max-w-[580px] w-full">
       <AuthProvider>
@@ -14,10 +16,9 @@ function App() {
           <Routes>
             <Route element={<PrivateRoutes />}>
               <Route path="/" element={<Home />} />
-            </Route>
-            <Route element={<PrivateRoutes />}>
+              <Route path="/chat/:id" element={<Chat />} />
+            </Route> 
               <Route path="/profile" element={<Profile />} />
-            </Route>
             <Route path="/login" element={<Login />} />
           </Routes>
         </Router>

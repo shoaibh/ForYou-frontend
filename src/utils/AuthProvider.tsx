@@ -2,9 +2,12 @@ import React, {
   ReactNode,
   createContext,
   useContext,
+  useEffect,
   useReducer,
   useState
 } from "react";
+import {  getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "../firebase.config";
 
 interface AuthContextProps {
   currentUser:  any;
@@ -20,7 +23,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-
 const INITIAL_STATE = {
   chatId: "null",
   user: {},
@@ -32,8 +34,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     // Implement your logout logic here
-
+    signOut(auth)
+      .then(() => {
+        // Sign-out successful.
+        console.log("User signed out successfully");
+        setCurrentUser(null);
+      })
+      .catch((error) => {
+        // An error happened.
+        console.error("Error signing out:", error);
+      });
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user); // Set isLoggedIn based on user's authentication state
+      setIsLoading(false);
+    });
+
+    return () => {
+      unsubscribe(); // Unsubscribe when the component unmounts
+    };
+  }, []);
 
   const chatReducer = (state: any, action: any) => {
     switch (action.type) {

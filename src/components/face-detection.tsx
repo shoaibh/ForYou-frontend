@@ -33,7 +33,9 @@ const FaceDetection = () => {
 
   return (
     <div>
-      <CameraFeed ref={videoRef} />
+      <div className='rounded border-2 border-purple-900 border-solid max-w-350 mx-auto mt-24 rounded-full overflow-hidden max-h-350 h-350 bg-cover'>
+        <CameraFeed ref={videoRef} />
+        </div>
       <button onClick={handleCameraFeed}>Detect Faces</button>
     </div>
   );
