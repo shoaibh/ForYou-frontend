@@ -10,6 +10,8 @@
       "@/components/*": ["src/components/*"],
       "@/pages/*": ["src/pages/*"],
       "@/utils/*": ["src/utils/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/ui/*": ["src/ui/*"],
       "@/": ["src/*"]
     },
 
@@ -27,6 +29,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "@/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

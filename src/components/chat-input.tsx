@@ -1,11 +1,5 @@
 import { useAuth } from "@/utils/AuthProvider";
-import {
-  Timestamp,
-  arrayUnion,
-  doc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
+import { Timestamp, arrayUnion, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";
@@ -13,7 +7,7 @@ import Attach from "../img/attach.png";
 import Img from "../img/img.png";
 import { db, storage } from "../firebase.config";
 
-export const Input = () => {
+export const ChatInput = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState<File | null | undefined>(null);
 
@@ -73,20 +67,10 @@ export const Input = () => {
   };
   return (
     <div className="input">
-      <input
-        type="text"
-        placeholder="Type something..."
-        onChange={(e) => setText(e.target.value)}
-        value={text}
-      />
+      <input type="text" placeholder="Type something..." onChange={(e) => setText(e.target.value)} value={text} />
       <div className="send">
         {/* <img src={Attach} alt="" /> */}
-        <input
-          type="file"
-          style={{ display: "none" }}
-          id="file"
-          onChange={(e) => setImg(e.target.files?.[0])}
-        />
+        <input type="file" style={{ display: "none" }} id="file" onChange={(e) => setImg(e.target.files?.[0])} />
         <label htmlFor="file">{/* <img src={Img} alt="" /> */}</label>
         <button onClick={handleSend}>Send</button>
       </div>

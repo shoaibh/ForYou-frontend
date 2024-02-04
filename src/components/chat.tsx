@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/utils/AuthProvider";
 import { Messages } from "./messages";
-import { Input } from "./input";
+import { ChatInput } from "./chat-input";
 import { collection, doc as docs, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
 
@@ -19,19 +19,19 @@ export const Chat = () => {
     if (id && currentUser) {
       const unsubscribe = onSnapshot(docs(db, "chats", id), async (doc) => {
         if (doc.exists()) {
-          const userId = doc.data().users.filter((user:any)=>user!==currentUser.uid)[0]
-          console.log("==", { user })
+          const userId = doc.data().users.filter((user: any) => user !== currentUser.uid)[0];
+          console.log("==", { user });
 
           if (userId) {
             // Fetch user details from the 'users' collection based on the obtained userId
-            const userDocRef = docs(db, 'users', userId);
+            const userDocRef = docs(db, "users", userId);
             const userDocSnapshot = await getDoc(userDocRef);
 
             if (userDocSnapshot.exists()) {
               const userI = userDocSnapshot.data();
               console.log("User Details:", user);
 
-              setUser(userI)
+              setUser(userI);
               // Handle the user data as needed
             } else {
               console.log("User not found.");
@@ -68,7 +68,7 @@ export const Chat = () => {
           </div>
         </div>
         <Messages />
-        <Input />
+        <ChatInput />
       </div>
     </div>
   );
