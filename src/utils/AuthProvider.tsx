@@ -1,16 +1,9 @@
-import React, {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-  useState
-} from "react";
-import {  getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import React, { ReactNode, createContext, useContext, useEffect, useReducer, useState } from "react";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase.config";
 
 interface AuthContextProps {
-  currentUser:  any;
+  currentUser: any;
   isLoading: boolean;
   logout: () => void;
   data: any;
@@ -29,7 +22,7 @@ const INITIAL_STATE = {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<any>({name: "shoaib"});
+  const [currentUser, setCurrentUser] = useState<any>({ name: "shoaib" });
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const logout = () => {
@@ -60,12 +53,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const chatReducer = (state: any, action: any) => {
     switch (action.type) {
       case "CHANGE_USER":
-        console.log("==action",{action})
         return {
-          user: action.payload.user,
-          chatId: action.payload.chatId,
+          user: action.user,
+          chatId: action.chatId,
         };
       case "UPDATE_CHAT_ID":
+        console.log("==action", { action });
         return {
           user: action.payload.user,
           chatId: action.payload.chatId,
@@ -78,13 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const [state, dispatch] = useReducer(chatReducer, INITIAL_STATE);
 
-  return (
-    <AuthContext.Provider
-      value={{ currentUser, logout, isLoading, data: state, dispatch }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ currentUser, logout, isLoading, data: state, dispatch }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextProps => {

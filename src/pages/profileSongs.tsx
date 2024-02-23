@@ -4,9 +4,10 @@ import { debounce } from "@/lib/helpers";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Label } from "@radix-ui/react-label";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 import { LiaSpinnerSolid } from "react-icons/lia";
 
 export const ProfileSongs = () => {
@@ -19,7 +20,6 @@ export const ProfileSongs = () => {
     debounce(async (value) => {
       if (value.length > 2) {
         setIsLoading(true);
-        console.log("==", { value });
         const data = await axios.get(`http://localhost:3000/search`, {
           params: { search: value },
         });
@@ -31,15 +31,31 @@ export const ProfileSongs = () => {
     [],
   );
 
-  //   const { data: debouncedResults, isLoading } = useQuery({
-  //     queryKey: ["search", debouncedValue],
-  //     queryFn: () =>
-  //       axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/song/search`, {
-  //         params: { searchQuery: debouncedValue },
-  //       }),
-  //     enabled: !!debouncedValue, // Only fetch when debouncedValue is truthy (not an empty string)
-  //     refetchOnWindowFocus: false, // Prevent automatic refetching on window focus
-  //   });
+  const { mutateAsync: addPlaylist } = useMutation({
+    // eslint-disable-next-line
+    mutationFn: async (song: any) => {
+      const response = await axios.put(`/room/update_queue/`, {
+        song: {
+          name: song.title,
+          video_id: song.videoId,
+          image_url: song?.image,
+          isPlaying: false,
+        },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      setSearch("");
+      toast("added the playlist");
+    },
+    onError: () => {
+      toast.error("Something went wrong");
+    },
+  });
+
+  const onAddPlaylist = async () => {
+    console.log({ selectedSongs });
+  };
 
   return (
     <div className="p-10 relative h-full">
@@ -92,7 +108,7 @@ export const ProfileSongs = () => {
       </div>
 
       <div className="absolute bottom-[50px] right-[50px]">
-        <Button>Next</Button>
+        <Button onClick={onAddPlaylist}>Next</Button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Outlet, Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 
 export const PrivateRoutes = () => {
@@ -8,5 +8,11 @@ export const PrivateRoutes = () => {
     return <div>"...loading"</div>;
   }
 
-  return currentUser ? <Outlet /> : <Navigate to="/login" />;
+  return currentUser ? (
+    <div className="h-full flex flex-col">
+      <Outlet />
+    </div>
+  ) : (
+    <Navigate to="/login" />
+  );
 };

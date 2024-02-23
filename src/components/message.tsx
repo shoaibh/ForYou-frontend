@@ -1,8 +1,10 @@
 import { useAuth } from "@/utils/AuthProvider";
 import { useEffect, useRef } from "react";
+import { format } from "date-fns";
+import clsx from "clsx";
 
-export const Message = ({ message }: { message: any }) => {
-  const { currentUser, data } = useAuth();
+export const Message = ({ message, isOwn }: { message: any; isOwn: boolean }) => {
+  // const { currentUser, data } = useAuth();
 
   const ref = useRef(null);
 
@@ -12,27 +14,19 @@ export const Message = ({ message }: { message: any }) => {
     }
   }, [message]);
 
+  const body = clsx("flex flex-col gap-2", isOwn && "items-end");
+  const messageClass = clsx(
+    "text-sm w-fit overflow-hidden pt-[5px] pb-[5px] pl-[10px] pr-[10px] rounded-md",
+    isOwn ? "bg-sky-500 text-white  rounded-br-none" : "bg-gray-100 text-black rounded-bl-none",
+  );
+
+  const time = clsx("text-[10px] flex", isOwn ? "text-slate-200 justify-end" : "text-slate-500 justify-start");
+
   return (
-    <div
-      ref={ref}
-      className={`message ${
-        currentUser && message.senderId === currentUser.uid && "owner"
-      }`}
-    >
-      <div className="messageInfo">
-        <img
-          src={
-            currentUser && message.senderId === currentUser.uid
-              ? currentUser.photoURL
-              : data.user.photoURL
-          }
-          alt=""
-        />
-        <span>just now</span>
-      </div>
-      <div className="messageContent">
-        <p>{message.text}</p>
-        {message.img && <img src={message.img} alt="" />}
+    <div className={body}>
+      <div className={messageClass}>
+        <div>{message.text}</div>
+        <div className={time}>{message?.date && format(message?.date.seconds, "p")}</div>
       </div>
     </div>
   );

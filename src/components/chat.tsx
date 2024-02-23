@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/utils/AuthProvider";
 import { Messages } from "./messages";
 import { ChatInput } from "./chat-input";
 import { collection, doc as docs, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase.config";
+import { IoIosArrowBack } from "react-icons/io";
 
 export const Chat = () => {
   const { id } = useParams();
@@ -18,8 +19,9 @@ export const Chat = () => {
   useEffect(() => {
     if (id && currentUser) {
       const unsubscribe = onSnapshot(docs(db, "chats", id), async (doc) => {
+        console.log("chats", { doc: doc.exists() });
         if (doc.exists()) {
-          const userId = doc.data().users.filter((user: any) => user !== currentUser.uid)[0];
+          const userId = doc.data().users?.filter((user: any) => user !== currentUser.uid)[0];
           console.log("==", { user });
 
           if (userId) {
@@ -51,25 +53,19 @@ export const Chat = () => {
     }
   }, [id, dispatch, user, data?.user?.uid]);
 
-  console.log("==", { data, id, user });
-
   return (
-    <div>
-      <h2>Chat Room ID: {id}</h2>
-      {/* Render your chat components here */}
-
-      <div className="chat">
-        <div className="chatInfo">
+    <>
+      <div className="border-b-2 border-slate-200 border-solid h-[55px] flex items-center w-full gap-[20px] pl-5">
+        <Link to={`/matches`}>
+          <IoIosArrowBack size={30} className="cursor-pointer" />
+        </Link>
+        <div className="flex items-center gap-2">
+          <img src="/user_default.svg" alt={data.user?.displayName} height={30} width={30} />
           <span>{data.user?.displayName}</span>
-          <div className="chatIcons">
-            {/* <img src={Cam} alt="" />
-          <img src={Add} alt="" />
-          <img src={More} alt="" /> */}
-          </div>
         </div>
-        <Messages />
-        <ChatInput />
       </div>
-    </div>
+      <Messages />
+      <ChatInput />
+    </>
   );
 };
