@@ -1,7 +1,6 @@
-import { useAuth } from "@/utils/AuthProvider";
-import { useEffect, useRef } from "react";
-import { format } from "date-fns";
 import clsx from "clsx";
+import { format } from "date-fns";
+import { useEffect, useRef } from "react";
 
 export const Message = ({ message, isOwn }: { message: any; isOwn: boolean }) => {
   // const { currentUser, data } = useAuth();

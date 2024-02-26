@@ -1,11 +1,9 @@
-// import { useAuth } from "../utils/AuthProvider";
-// import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { BsFillShieldLockFill, BsHeadphones } from "react-icons/bs";
 import { CgSpinner } from "react-icons/cg";
 
 import { useAuth } from "@/utils/AuthProvider.tsx";
-import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import OtpInput from "react-otp-input";
@@ -13,23 +11,21 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase.config.ts";
+import { useMutation } from "@tanstack/react-query";
+import { request } from "@/api/request.ts";
 
 export const Login = () => {
   const [otp, setOtp] = useState("");
   const [ph, setPh] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
 
   const navigate = useNavigate();
 
-  // const {mutateAsync} = useMutation()
-
   const { currentUser, dispatch } = useAuth();
 
   useEffect(() => {
-    console.log("==", { currentUser });
     if (currentUser) {
-      navigate("/");
+      navigate("/profile-songs");
     }
   }, [currentUser]);
 
@@ -46,56 +42,45 @@ export const Login = () => {
     }
   }
 
-  function onSignup() {
-    setLoading(true);
-    onCaptchVerify();
+  const { mutateAsync: onSignup, isPending: otpSending } = useMutation({
+    mutationFn: async () => {
+      onCaptchVerify();
 
-    const appVerifier = window.recaptchaVerifier;
+      const appVerifier = window.recaptchaVerifier;
 
-    const formatPh = "+" + ph;
+      const formatPh = "+" + ph;
 
-    signInWithPhoneNumber(auth, formatPh, appVerifier)
-      .then((confirmationResult) => {
-        window.confirmationResult = confirmationResult;
-        setLoading(false);
-        setShowOTP(true);
-        toast.success("OTP sended successfully!");
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
+      const confirmationResult = await signInWithPhoneNumber(auth, formatPh, appVerifier);
+      window.confirmationResult = confirmationResult;
+      setShowOTP(true);
+      toast.success("OTP sended successfully!");
+    },
+    onError: (e) => console.log(e),
+  });
+
+  const { mutateAsync: onOTPVerify, isPending: otpVerifying } = useMutation({
+    mutationFn: async () => {
+      const result = await window.confirmationResult.confirm(otp);
+
+      await request("/api/user", {
+        phoneNumber: result.user.phoneNumber,
+        firebaseUserUUID: result.user.uid,
+        meta: { ...result.user.metadata, photoURL: result.user.photoURL },
       });
-  }
 
-  function onOTPVerify() {
-    setLoading(true);
-    window.confirmationResult
-      .confirm(otp)
-      .then(async (res: any) => {
-        setLoading(false);
-        const date = new Date().getTime();
-        const displayName = `user_${date}`;
-
-        await updateProfile(res.user, {
-          displayName,
-        });
-        // //create user on firestore
-        await setDoc(doc(db, "users", res.user.uid), {
-          uid: res.user.uid,
-          displayName,
-          phoneNumber: res.user.phoneNumber,
-        });
-
-        // //create empty user chats on firestore
-        await setDoc(doc(db, "userChats", res.user.uid), {});
-        dispatch({ type: "CHANGE_USER", user: res.user });
-        navigate("/profile-songs");
-      })
-      .catch((err: any) => {
-        console.log(err);
-        setLoading(false);
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        phoneNumber: result.user.phoneNumber,
       });
-  }
+
+      await setDoc(doc(db, "userChats", result.user.uid), {});
+      dispatch({ type: "CHANGE_USER", user: result.user });
+      navigate("/profile-songs");
+    },
+    onError: (e) => console.log(e),
+  });
+
+  const isLoading = otpSending || otpVerifying;
 
   return (
     <>
@@ -122,10 +107,10 @@ export const Login = () => {
                   inputStyle="text-black border-b border-black border-solid"
                 />
                 <button
-                  onClick={onOTPVerify}
+                  onClick={() => onOTPVerify()}
                   className="bg-violet-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
                 >
-                  {loading && <CgSpinner size={20} className="mt-1 animate-spin" />}
+                  {isLoading && <CgSpinner size={20} className="mt-1 animate-spin" />}
                   <span>Verify OTP</span>
                 </button>
               </>
@@ -139,10 +124,10 @@ export const Login = () => {
                 </label>
                 <PhoneInput country={"in"} value={ph} onChange={setPh} />
                 <button
-                  onClick={onSignup}
+                  onClick={() => onSignup()}
                   className="bg-violet-600 w-full flex gap-1 items-center justify-center py-2.5 text-white rounded"
                 >
-                  {loading && <CgSpinner size={20} className="mt-1 animate-spin" />}
+                  {isLoading && <CgSpinner size={20} className="mt-1 animate-spin" />}
                   <span id="sign-in-button">Send code via SMS</span>
                 </button>
               </>

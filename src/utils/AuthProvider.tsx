@@ -58,7 +58,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           chatId: action.chatId,
         };
       case "UPDATE_CHAT_ID":
-        console.log("==action", { action });
         return {
           user: action.payload.user,
           chatId: action.payload.chatId,

@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/utils/AuthProvider";
-import { Messages } from "./messages";
-import { ChatInput } from "./chat-input";
-import { collection, doc as docs, getDoc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../firebase.config";
+import { doc as docs, getDoc, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
+import { Link, useParams } from "react-router-dom";
+import { db } from "../firebase.config";
+import { ChatInput } from "./chat-input";
+import { Messages } from "./messages";
 
 export const Chat = () => {
   const { id } = useParams();
-
-  // Use the 'id' parameter to fetch chat room data, display the chat, etc.
 
   const { data, dispatch, currentUser } = useAuth();
 
@@ -19,28 +17,8 @@ export const Chat = () => {
   useEffect(() => {
     if (id && currentUser) {
       const unsubscribe = onSnapshot(docs(db, "chats", id), async (doc) => {
-        console.log("chats", { doc: doc.exists() });
         if (doc.exists()) {
           const userId = doc.data().users?.filter((user: any) => user !== currentUser.uid)[0];
-          console.log("==", { user });
-
-          if (userId) {
-            // Fetch user details from the 'users' collection based on the obtained userId
-            const userDocRef = docs(db, "users", userId);
-            const userDocSnapshot = await getDoc(userDocRef);
-
-            if (userDocSnapshot.exists()) {
-              const userI = userDocSnapshot.data();
-              console.log("User Details:", user);
-
-              setUser(userI);
-              // Handle the user data as needed
-            } else {
-              console.log("User not found.");
-            }
-          } else {
-            console.log("No other user in the chat.");
-          }
         }
       });
       return () => unsubscribe();

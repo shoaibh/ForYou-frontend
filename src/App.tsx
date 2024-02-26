@@ -30,8 +30,8 @@ function App() {
                     </Footer>
                   }
                 />
+                <Route path="/profile-songs" element={<ProfileSongs />} />
               </Route>
-              <Route path="/profile-songs" element={<ProfileSongs />} />
               <Route path="/login" element={<Login />} />
             </Routes>
           </Router>
